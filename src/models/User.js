@@ -1,0 +1,95 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/connectDB');
+
+const User = sequelize.define('User', {
+    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    fullname: { type: DataTypes.STRING, allowNull: false },
+    telegram_id: {type: DataTypes.BIGINT, allowNull: true },
+    username: { type: DataTypes.STRING, allowNull: false },
+    sponsor: { type: DataTypes.INTEGER, allowNull: true }, // Parent user (sponsor)
+    active_status: { type: DataTypes.ENUM('Active', 'Inactive'), defaultValue: 'Inactive' },
+    jdate: { type: DataTypes.DATEONLY },
+    adate: { type: DataTypes.DATEONLY , allowNull: true },
+    date_of_birth: {
+        type: DataTypes.DATEONLY,
+        allowNull: true
+    },  
+    
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    username: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true
+    },
+    user_name: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+   
+    fullname: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    lastname: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    // user_name: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true
+    // },
+    password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    tpassword: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    has_pin: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    PSR: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    pin: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    TPSR: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    sponsor: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    level: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    ParentId: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    }
+,
+    package: {
+        type: DataTypes.DOUBLE(10, 2),  // Double type with 2 decimal places
+        allowNull: false,
+        defaultValue: 0.00
+    }
+    // balance: { type: DataTypes.FLOAT, defaultValue: 0 },
+}, {
+    tableName: 'users',
+    timestamps: false
+});
+
+
+
+module.exports = User;
