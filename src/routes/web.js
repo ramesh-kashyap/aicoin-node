@@ -48,6 +48,7 @@ router.post('/updatePin',authMiddleware, AuthController.updatePin);
 router.get('/user-incomes',authMiddleware, userController.userIncomes);
 router.get('/all-income', authMiddleware, IncomeController.allIncome);
 
+router.get('/get-telegram-coin', authMiddleware, profileController.telegramToken);
 
 router.put('/updateUsername', authMiddleware, profileController.updateUserProfile);
 router.put('/updateFullName', authMiddleware, profileController.updateUserFullName);
