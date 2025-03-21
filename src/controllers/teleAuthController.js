@@ -3,6 +3,7 @@ const { QueryTypes } = require('sequelize');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User"); // User Model Import Karein
+const Telegram_user = require("../models/telegram");
 const otpStore = {}; 
 const userSessions = {}; 
 module.exports = { userSessions };
@@ -240,7 +241,7 @@ const logout = async (req, res) => {
 
 
 const TelegramBot = require('node-telegram-bot-api');
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false})
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true})
 bot.onText(/\/start (\d+)/, async (msg, match) => {
     const chatId = msg.chat.id; 
     const referrerId = match[1]; // Extract referral ID
@@ -302,7 +303,11 @@ const loginWithTelegram = async (req, res) => {
                 INSERT INTO telegram_users (telegram_id, tusername, tname, tlastname, sponsor) 
                 VALUES (:telegram_id, :tusername, :tname, :tlastname, :sponsor)
             `;
-
+            
+            if(sponsor !== null){
+            const InBonus = await Telegram_user.increment({invite_bonus: 50, coin_balance: 50}, {where:{telegram_id: sponsor}});
+            // console.log(InBonus);
+            }            
             const [insertResult] = await sequelize.query(queryInsertUser, {
                 replacements: { telegram_id, tusername, tname, tlastname, sponsor},
                 type: QueryTypes.INSERT,

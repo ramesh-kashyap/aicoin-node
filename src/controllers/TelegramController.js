@@ -419,6 +419,49 @@ const verifyOtp = async (req, res) => {
     });
   }
 };
+   
 
+const fetchfriend = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+         console.log(userId);
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized: User ID missing" });
+        }
 
-module.exports = { getUserByTelegramId,getTasks,startTask,claimTask,updateBalance, daycoin, claimday,claimtoday ,fatchpoint,fatchBalance};
+        const user = await TelegramUser.findOne({ where: { id: userId } });
+        console.log(user);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Fetch friends sponsored by this user
+        const friends = await TelegramUser.findAll({
+            where: { sponsor: user.telegram_id }
+        });
+        console.log(friends);
+        if (friends.length === 0) {
+            return res.status(200).json({ message: "No user friends found" });
+        }
+
+        // Fetch user's invite bonus (assuming that's a column)
+        const userData = await TelegramUser.findOne({
+            where: { telegram_id: user.telegram_id },
+            attributes: ['invite_bonus'] // only fetch invite_bonus field
+        });
+
+        return res.status(200).json({
+            message: "Friends fetched successfully",
+            totalFriends: friends.length,
+            inviteBonus: userData?.invite_bonus || 0,
+            friends
+        });
+
+    } catch (error) {
+        console.error("Error in fetchfriend:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+ 
+module.exports = { getUserByTelegramId,getTasks,startTask,claimTask,updateBalance, daycoin, claimday,claimtoday ,fatchpoint,fatchBalance, fetchfriend};

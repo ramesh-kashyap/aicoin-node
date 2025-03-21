@@ -77,7 +77,7 @@ router.post('/claim-day', teleMiddleware,TelegramController.claimday);
 router.post('/claim-reward',teleMiddleware,TelegramController.claimtoday);
 router.post('/fatchPoint',teleMiddleware,TelegramController.fatchpoint);
 router.post('/fatchBalance', teleMiddleware,TelegramController.fatchBalance);
-
+router.post('/fetchfriend', teleMiddleware, TelegramController.fetchfriend);
 
 
 // Mount the router on /api/auth so that /register becomes /api/auth/register

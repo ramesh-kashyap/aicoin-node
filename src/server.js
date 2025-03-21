@@ -18,18 +18,20 @@ app.use(helmet());
 app.use(express.json());
 
 // CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
-app.use(cors({
-    origin: function (origin, callback) {
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true); // ✅ Allowed origin
-        } else {
-            callback(new Error('❌ Not allowed by CORS')); // ❌ Block unknown origins
-        }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
-}));
+const allowedOrigins = ["http://localhost:3000", "https://f17a-2405-201-5802-909b-653c-ee9d-3f76-4ea1.ngrok-free.app","chrome-extension://iaofeokmheiceffgkidbgbcdmipmklpl"]; // Add multiple origins
+app.use(
+   cors({
+      origin: function (origin, callback) {
+         if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+         } else {
+            callback(new Error("Not allowed by CORS"));
+         }
+      },
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true,
+   })
+);
 
 // Logger Configuration
 const logger = winston.createLogger({
