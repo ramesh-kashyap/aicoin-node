@@ -10,6 +10,10 @@ const Investment = sequelize.define('Investment', {
         type: DataTypes.INTEGER, // Or DataTypes.FLOAT if it needs to be a float
         allowNull: true, // Adjust based on whether it's a required field
       },
+      walletAddress: {
+        type: DataTypes.STRING, // Or DataTypes.FLOAT if it needs to be a float
+        allowNull: true, // Adjust based on whether it's a required field
+      },
       amount: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,

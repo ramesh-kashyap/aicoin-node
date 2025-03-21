@@ -70,30 +70,36 @@ const StakeRecord = async (req, res) => {
       const { userId,
         amount_in_usdt,
         token,
-        txnHash, } = req.body;
-     
-        if (!req.user || !req.user.id) {
-          return res.status(401).json({ error: "Unauthorized: User not found" });
-        }
+        txnHash, walletAddress } = req.body;
+        // const userid = req.user.id;
+        // const user = req.user;
+        // if (!req.user || !req.user.id) {
+        //   return res.status(401).json({ error: "Unauthorized: User not found" });
+        // }
         const decryptedValue = decryptID(userId);
-
-        console.log(decryptedValue);
+         console.log("chee",decryptedValue);
+      
         if (decryptedValue !== req.user.id.toString()) {
           return res.status(403).json({ error: "Forbidden: User ID mismatch" });
         }
       
   
-      const userid = req.user.id;
-      const user = req.user;
+    
       // Validate input
       if (!amount_in_usdt ) {
         return res.status(400).json({
           status: false,
-          message: "amount_in_usdt are required.",
+          message: "amount are required.",
         });
       }
     
 
+      if (!walletAddress ) {
+        return res.status(400).json({
+          status: false,
+          message: "wallet address are required.",
+        });
+      }
       if (!token ) {
         return res.status(400).json({
           status: false,
@@ -103,7 +109,7 @@ const StakeRecord = async (req, res) => {
       if (!txnHash ) {
         return res.status(400).json({
           status: false,
-          message: "txnHash are required.",
+          message: "Transaction Id are required.",
         });
       }
     
@@ -140,10 +146,10 @@ const StakeRecord = async (req, res) => {
       { active_status: 'Active',adate:new Date().toISOString().split("T")[0] },
       { where: { id: investment.user_id } }
     );
-  console.log(check, investment.user_id);
+ 
      await Transaction.create(data2);
      const result = await addDirectIncome(userid, amount_in_usdt);
-     console.log(result);
+   
      if (result) {
         console.log('Direct income added successfully.');
       } else {

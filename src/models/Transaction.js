@@ -21,6 +21,10 @@ const Transaction = sequelize.define('Transaction', {
         allowNull: true,
         unique: true, 
       },
+      walletAddress: {
+        type: DataTypes.STRING, // Or DataTypes.FLOAT if it needs to be a float
+        allowNull: true, // Adjust based on whether it's a required field
+      },
     status: { type: DataTypes.ENUM('Active', 'Inactive'), defaultValue: 'Inactive' },
     created_at: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW } // ✅ Manually added
 

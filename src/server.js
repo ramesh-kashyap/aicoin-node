@@ -7,6 +7,7 @@ const session = require("express-session");
 const passport = require("passport");
 const axios = require("axios"); // For sending messages to Telegram
 const initWebRouter = require("./routes/web");
+const cookieParser = require('cookie-parser');
 const { calculateRoiIncome } = require("../src/cron/cronController");
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,19 +17,22 @@ const TELEGRAM_WEBHOOK_URL = process.env.TELEGRAM_WEBHOOK_URL; // Your webhook U
 // Security Middleware
 app.use(helmet());
 app.use(express.json());
-
+app.use(cookieParser());
 // CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['*'];
+
 app.use(cors({
-    origin: function (origin, callback) {
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true); // ✅ Allowed origin
-        } else {
-            callback(new Error('❌ Not allowed by CORS')); // ❌ Block unknown origins
-        }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true); // ✅ Allow originless requests (like Postman)
+    } else {
+      callback(new Error('❌ Not allowed by CORS'));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
 }));
 
 // Logger Configuration
@@ -45,12 +49,21 @@ const logger = winston.createLogger({
 app.use(session({
     secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: false, // recommended for login flows
+    cookie: {
+      maxAge: 3600000,
+      sameSite: 'lax',
+      secure: false // true only if using HTTPS
+    }
 }));
 
 app.use(passport.initialize());
 app.use(passport.session());
+const storage = require('node-persist');
 
+(async () => {
+  await storage.init(); // Initialize before using it
+})();
 // Initialize Web Routes
 initWebRouter(app);
 

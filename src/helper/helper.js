@@ -1,6 +1,36 @@
 // services/balanceService.js
 const  Otp = require('../models/Otp');
 const { Income, Investment, Withdraw } = require("../models");
+const nodemailer = require('nodemailer');
+
+
+async function sendEmail(email, subject, data) {
+  try {
+      // ✅ Create a transporter using cPanel SMTP
+      const transporter = nodemailer.createTransport({
+          host: "mail.pronft.in", // Replace with your cPanel SMTP host
+          port: 465, // Use 465 for SSL, 587 for TLS
+          secure: true, // true for 465, false for 587
+          auth: {
+            user: "noreply@pronft.in", // ✅ No 'mailto:'
+            pass: "J4eSnY=r?zgm",
+          },
+      });
+      const mailOptions = {
+        from: '"HyperMesh" <noreply@pronft.in>', // Replace with your email
+          to: email,
+          subject: subject,
+          html: `<p>Hi ${data.name},</p>
+                 <p>We’re inform you that a One-Time Password (OTP) has been generated for your account authentication. Please use the OTP below to continue with your verification process.</p>
+                 <p>OTP: ${data.code}</p>`,
+      };
+      // ✅ Send the email
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Email sent:", info.response);
+  } catch (error) {
+      console.error("Error sending email:", error);
+  }
+}
 
 async function calculateAvailableBalance(userId) {
     // Assume Income, Investment, and Withdraw are imported models
@@ -68,7 +98,11 @@ const generateOtp = async (req, res) => {
       existingOtpRecord.otp = otp;
       existingOtpRecord.expiresAt = expiresAt;
       await existingOtpRecord.save();
-
+      await sendEmail(email, "Your One-Time Password", {
+        email: email,
+        code: otp,
+        purpose: "Register Request"
+    });
       return res.status(200).json({
         status: true,
         message: "OTP updated successfully.",
@@ -85,7 +119,12 @@ const generateOtp = async (req, res) => {
         expiresAt,
         status: "Pending",
       });
-
+      await sendEmail(email, "Your One-Time Password", {
+       
+        email: email,
+        code: otp,
+        purpose: "Register Request",
+    });
       return res.status(200).json({
         status: true,
         message: "OTP generated successfully.",

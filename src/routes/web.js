@@ -37,7 +37,7 @@ router.get('/list', authMiddleware, teamController.listUsers);
 // router.post('/team-income',  teamController.distributeCommissions);
 router.post('/login', AuthController.login);
 router.get("/deposit-History", authMiddleware, InvestController.getHistory);
-router.post("/stake-record", authMiddleware, InvestController.StakeRecord);
+router.post("/stake-record",  InvestController.StakeRecord);
 router.get("/withdraw-History", authMiddleware, withdrawController.getWithdrawHistory);
 router.post('/verify-pin',authMiddleware, AuthController.verifyPin);
 router.get('/live-data',authMiddleware, homeController.getLiveData);

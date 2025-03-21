@@ -5,81 +5,105 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User"); // User Model Import Karein
 const  resetpass = require('../models/resetpass');
 require('dotenv').config();
+const storage = require('node-persist');
 
+(async () => {
+  await storage.init();
+})();
 const path = require("path");
 
 // Register User Function
 const register = async (req, res) => {
-  try {
-      const { name, phone, email, password, sponsor } = req.body;
+ 
+    try {
       
-      if (!name || !phone || !email || !password || !sponsor) {
-          return res.status(400).json({ error: "All fields are required!" });
-      }
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      // Check if user already exists
-      const [existingUser] = await db.execute(
-          "SELECT * FROM users WHERE email = ? OR phone = ?", [email, phone]
-      );
-      
-      if (existingUser.length > 0) {
-          return res.status(400).json({ error: "Email or Phone already exists!" });
-      }
+        const { fullname, lastname,   email, password, referralCode } = req.body;
+       
+        if (!fullname || !lastname ||  !email || !password || !referralCode) {
+          
+            return res.status(400).json({ error: "All fields are required!" });
+        }   
 
-      // Check if sponsor exists
-      const [sponsorUser] = await db.execute(
-          "SELECT * FROM users WHERE username = ?", [sponsor]
-      );
-      if (sponsorUser.length === 0) {
-          return res.status(400).json({ error: "Sponsor does not exist!" });
-      }
 
-      // Generate username & transaction password
-      const username = Math.random().toString(36).substring(2, 10);
-      const tpassword = Math.random().toString(36).substring(2, 8);
+     
+        if (!emailRegex.test(email)) {
+         
+          return res.status(400).json({ error: 'Invalid email address.' });
+        }
 
-      // Hash passwords
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const hashedTPassword = await bcrypt.hash(tpassword, 10);
 
-      // Get parent ID
-      const [lastUser] = await db.execute("SELECT id FROM users ORDER BY id DESC LIMIT 1");
-      const parentId = lastUser.length > 0 ? lastUser[0].id : null;
 
-      // Provide a default for sponsor level if it's undefined or null
-      const sponsorLevel = (sponsorUser[0].level !== undefined && sponsorUser[0].level !== null)
-          ? sponsorUser[0].level
-          : 0;
+        // Check if user already exists
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            // console.log('2');
+            return res.status(400).json({ error: "Email already exists!" });
+        }
 
-      // Construct new user object
-      const newUser = {
-          name,
-          phone,
-          email,
-          username,
+        // Check if sponsor exists
+        const sponsorUser = await User.findOne({ where: { username: referralCode } });
+        if (!sponsorUser) {
+            // console.log('1');
+            return res.status(400).json({ error: "Sponsor does not exist!" });
+        }
+        console.log("response",sponsorUser);
+
+        // Generate username & transaction password
+        const username = "AICX"+Math.floor(10000000 + Math.random() * 90000000);        
+         const tpassword = Math.floor(10000+ Math.random() * 90000); 
+
+        // Hash passwords
+        const hashedPassword = await bcrypt.hash(password.toString(), 10);
+        const hashedTPassword = await bcrypt.hash(tpassword.toString(), 10);
+
+        // Get last user for ParentId (assuming ParentId is determined this way)
+        const lastUser = await User.findOne({ order: [['id', 'DESC']] });
+        const parentId = lastUser ? lastUser.id : null;
+
+        // Set sponsor level
+        const sponsorLevel = sponsorUser.level ? sponsorUser.level : 0;
+
+        
+        // const newUser = await User.create({
+        //     fullname:fullname,
+        //     lastname:lastname,
+            
+        //     email:email,
+        //     username,
+        //     password: hashedPassword,
+        //     tpassword: hashedTPassword,
+        //     PSR: password,
+        //     TPSR: tpassword,
+        //     sponsor: sponsorUser.id,
+        //     level: sponsorLevel + 1,
+        //     ParentId: parentId,
+        // });
+
+        const userData = {
+          fullname: fullname,
+          lastname: lastname,
+          email: email,
+          username: username,
           password: hashedPassword,
           tpassword: hashedTPassword,
-          PSR: password,
-          TPSR: tpassword,
-          sponsor: sponsorUser[0].id,
-          level: sponsorLevel + 1,  // Default to 0 if sponsor level is not defined, then add 1
+          PSR: password,           // plain text (not recommended to store)
+          TPSR: tpassword,         // same here
+          sponsor: sponsorUser.id,
+          level: sponsorLevel + 1,
           ParentId: parentId
-      };
+        };
+        await storage.setItem(email, userData);
 
-      // Optional: Log newUser for debugging (avoid logging sensitive info in production)
-      // console.log("New User Data:", newUser);
-
-      // Insert new user into the database
-      await db.execute("INSERT INTO users SET ?", newUser);
-
-      return res.status(201).json({ message: "User registered successfully!", username });
-
-  } catch (error) {
-      console.error("Error:", error.message);
-      return res.status(500).json({ error: "Server error", details: error.message });
-  }
+        console.log("🔐 Saved to node-persist:", userData);
+    
+        return res.status(201).json({status:true , username: username });
+    } catch (error) {
+        console.error("Error:", error.message);
+        return res.status(500).json({ error: "Server error", details: error.message });
+    }
 };
-
 
 
 
@@ -89,7 +113,7 @@ const register = async (req, res) => {
 
 // Login User Function
 const login = async (req, res) => {
-    console.log('hello');
+   
 
     try {
       // Destructure username and password from the request body.
@@ -153,7 +177,7 @@ const login = async (req, res) => {
         return res.status(400).json({ error: "User not found!" });
 
       }
-      console.log("user:",user );
+      
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       // const expiresAt = new Date(Date.now() + validityInMinutes * 60000);
       const isnot = await resetpass.findOne({
@@ -275,15 +299,29 @@ const login = async (req, res) => {
 
   const setPin = async (req, res) => {
     try {
-      console.log("Request received:", req.body); // Debugging
+      
       const { email, pin } = req.body;
 
+      const userData = await storage.getItem(email);
+
+      if (!userData) {
+        return res.status(404).json({ message: "User data not found" });
+      }
+    
+    
+      // ✅ You can now create the user in DB
+      await User.create(userData);
+
+      const remove = await storage.removeItem(email);
+
+    
       // ✅ Corrected Query using `where`
       const user = await User.findOne({ where: { email: email } });
 
       console.log("User Found:", user ? user.email : "No user found"); // Debugging
 
       if (!user) {
+        console.log("User not found" );
         return res.status(404).json({ message: "User not found" });
       }
       const hashedPin = await bcrypt.hash(pin, 10); // 10 = Salt Rounds
@@ -300,7 +338,7 @@ const login = async (req, res) => {
         process.env.JWT_SECRET,  
        
       );
-  
+    
       return res.status(200).json({
         status:true,
         message: "Login successful!",
